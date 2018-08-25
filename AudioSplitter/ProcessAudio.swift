@@ -66,16 +66,15 @@ func getFloats(pointer:UnsafeMutablePointer<Float>, start:Int, end:Int)->[Float]
     return floats
 }
 
-func findSound(channelData: UnsafeMutablePointer<Float>, sampleCount: Int, sampleRate: Double, detectionType: String) -> [(Double, Double)]{
-    // TODO Put these settings somewhere user accessible
-    let dBThreshold: Float = -20.0
-    let sampleNumber = 100
-    let minimumSilenceLength  = 0.7
-    let minimumSoundLength = 0.2
-    let headAdjust = 0.10
-    let tailAdjust = 0.3
+func findSound(channelData: UnsafeMutablePointer<Float>, sampleCount: Int, sampleRate: Double, detectionType: String) -> [SoundTiming]{
+    let dBThreshold: Float = UserDefaults.standard.float(forKey: "dbThreshold")
+    let sampleNumber = UserDefaults.standard.integer(forKey: "sampleNumber")
+    let minimumSilenceLength  = UserDefaults.standard.double(forKey: "minimumSilence")
+    let minimumSoundLength = UserDefaults.standard.double(forKey: "minimumSound")
+    let headAdjust = UserDefaults.standard.double(forKey: "headAdjust")
+    let tailAdjust = UserDefaults.standard.double(forKey: "tailAdjust")
     
-    var soundList = [(Double, Double)]()
+    var soundList = [SoundTiming]()
     var silenceLength = 0.0
     var silenceStart = -1.0
     var soundStart = -1.0
@@ -102,18 +101,20 @@ func findSound(channelData: UnsafeMutablePointer<Float>, sampleCount: Int, sampl
         }
         
         
-        // Silence
-        if amplitude < dBThreshold{
+        if amplitude < dBThreshold{ // Sample is silence
             if silenceStart < 0 {
                 silenceStart = currentTime
             }
+            
+            // Silence after enough sound so append to list
             if silenceLength > minimumSilenceLength && foundSound && soundLength > minimumSoundLength{
                 foundSound = false
                 soundLength = 0.0
-                soundList.append((soundStart, currentTime))
+                let timing = SoundTiming.init(start: soundStart, end: currentTime-minimumSilenceLength)
+                soundList.append(timing)
             }
             silenceLength += sampleLength
-        } else{
+        } else{ // Sample is sound
             if !foundSound{
                 foundSound = true
                 silenceLength = 0.0
@@ -125,26 +126,32 @@ func findSound(channelData: UnsafeMutablePointer<Float>, sampleCount: Int, sampl
             }
             soundLength += sampleLength
         }
-//        print("Sample number \(i+slice.count), Max \(sampleCount)")
-//        print("Percent done \(Float(i+slice.count)/Float(sampleCount) * 100.0)")
     }
+    
     if foundSound && soundLength > minimumSoundLength && silenceStart > soundStart{
-        soundList.append((soundStart, silenceStart))
+        let timing = SoundTiming.init(start: soundStart, end: silenceStart)
+        soundList.append(timing)
     }
     
     for i in 0..<soundList.count{
-        var (head, tail) = soundList[i]
-        head -= headAdjust
-        tail += tailAdjust
+        var timing = soundList[i]
+        timing.start -= headAdjust
+        timing.end += tailAdjust
+        soundList[i] = timing
     }
     
+    // Combine overlapping timings after head/tail adjust
     for i in stride(from: soundList.count-1, to: 1, by: -1){
-        var (_, prevTail) = soundList[i-1]
-        let (head, tail) = soundList[i]
-        if prevTail > head {
-            prevTail = tail
+        var prevTiming = soundList[i-1]
+        let timing = soundList[i]
+        if prevTiming.end > timing.start {
+            prevTiming.end = timing.end
             soundList.remove(at: i)
+            soundList[i-1] = prevTiming
         }
+    }
+    for timing in soundList{
+        print(timing.start, timing.end)
     }
     
     return soundList
@@ -173,19 +180,25 @@ func processFile(inputURL: URL, outputDirectory: URL, detectionType: String, tri
     let sr = audioFile.processingFormat.sampleRate
     var soundList = findSound(channelData: channelData, sampleCount: Int(sampleCount), sampleRate: sr, detectionType: detectionType)
     if trimType == "Trim"{
-        let (firstHead, _) = soundList.first!
-        let (_, lastTail) = soundList.last!
-        soundList = [(firstHead, lastTail)]
+        // Could speed up by finding first sound, breaking, and then going through the samples in reverse to find the last sound, break
+        guard let first = soundList.first else {
+            print("MISSING FIRST SAMPLE")
+            return
+        }
+        guard let last = soundList.last else{
+            print("MISSING LAST SAMPLE")
+            return
+        }
+        let timing = SoundTiming.init(start: first.start, end: last.end)
+        soundList = [timing]
     }
     
     let ext = inputURL.pathExtension
     let name = inputURL.deletingPathExtension().lastPathComponent
-    for (i, (inPoint, outPoint)) in soundList.enumerated(){
+    for (i, timing) in soundList.enumerated(){
         let outputPath = outputDirectory.appendingPathComponent("\(name)_\(i).\(ext)")
-        runFFMPEG(input: inputURL, output: outputPath, inPoint: inPoint, outPoint: outPoint)
-    }
-//    print(soundList)
-    
+        runFFMPEG(input: inputURL, output: outputPath, inPoint: timing.start, outPoint: timing.end)
+    }    
 }
 
 func processFiles(inputURL: URL, outputDirectory: URL, detectionType: String, trimType: String){
@@ -198,88 +211,8 @@ func processFiles(inputURL: URL, outputDirectory: URL, detectionType: String, tr
                 processFile(inputURL: inputURL, outputDirectory: outputDirectory, detectionType: detectionType, trimType: trimType)
             }
         }
-        
     } else{
         print("SELECTED FILE DOESN'T EXIST")
     }
     
 }
-
-
-
-
-//func readSamplesToData(url: URL){
-//    let asset = AVAsset.init(url: url)
-//    do{
-//        let reader = try AVAssetReader.init(asset: asset)
-//        let aTracks = asset.tracks(withMediaType: .audio)
-//        guard let aTrack = aTracks.first else{
-//            print("NO AUDIO TRACK")
-//            return
-//        }
-//        let settings = [AVFormatIDKey: kAudioFormatLinearPCM]
-//        let trackOutput = AVAssetReaderTrackOutput.init(track: aTrack, outputSettings: settings)
-//        reader.add(trackOutput)
-//        reader.startReading()
-//        var sample = trackOutput.copyNextSampleBuffer()
-//        var data = Data()
-//
-//
-//
-//        while(sample != nil){
-//            var blockBuffer : CMBlockBuffer?
-//            var audioBufferList = AudioBufferList()
-//            CMSampleBufferGetAudioBufferListWithRetainedBlockBuffer(sample!, nil, &audioBufferList, MemoryLayout<AudioBufferList>.size, nil, nil, 0, &blockBuffer)
-//            let buffers = UnsafeBufferPointer<AudioBuffer>(start: &audioBufferList.mBuffers, count: Int(audioBufferList.mNumberBuffers))
-//
-//            for audioBuffer in buffers {
-//                let frame = audioBuffer.mData?.assumingMemoryBound(to: UInt8.self)
-//                data.append(frame!, count: Int(audioBuffer.mDataByteSize))
-//            }
-//            sample = trackOutput.copyNextSampleBuffer()
-//        }
-//        let out = URL.init(fileURLWithPath: "/Users/mhand/Desktop/TestClip/out.wav")
-//        try data.write(to: out)
-//    } catch{
-//        print ("PROBLEM READING PACKETS")
-//    }
-//}
-
-
-//func arrayFromFloatData(_ audioFile: AVAudioFile) -> ([[Float]]?){
-//    // Lots of this taken from AudioKit
-//    let format = audioFile.processingFormat
-//    let channelCount = Int(format.channelCount)
-//    let frameCount = UInt32(audioFile.length)
-//
-//    guard let buffer = AVAudioPCMBuffer.init(pcmFormat: format, frameCapacity: frameCount) else{
-//        print("Couldn't create PCM Buffer FOR \(audioFile.url.path)")
-//        return nil
-//    }
-//
-//    do{
-//        try audioFile.read(into: buffer)
-//    } catch{
-//        print ("PROBLEM READING FILE INTO BUFFER FOR \(audioFile.url.path)")
-//    }
-//
-//    let frameLength = UInt32(buffer.frameLength)
-//    let stride = buffer.stride
-//
-//    // Preallocate our Array so we're not constantly thrashing while resizing as we append.
-//    var floatData = Array(repeating: [Float].init(repeating: 0, count: Int(frameLength)), count: channelCount)
-//
-//    guard let bufferFloats = buffer.floatChannelData else{
-//        print("PROBLEM WITH THE FLOATS  FOR \(audioFile.url.path)")
-//        return nil
-//    }
-//
-//    // Loop across our channels...
-//    for channel in 0..<channelCount {
-//        // Make sure we go through all of the frames...
-//        for sampleIndex in 0..<Int(frameLength) {
-//            floatData[channel][sampleIndex] = (bufferFloats[channel][sampleIndex * stride])
-//        }
-//    }
-//    return floatData
-//}

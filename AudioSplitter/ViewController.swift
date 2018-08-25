@@ -21,6 +21,7 @@ class ViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        setDefaultSettings()
     }
 
     override var representedObject: Any? {
@@ -29,11 +30,34 @@ class ViewController: NSViewController {
         }
     }
     
+    func setDefaultSettings() {
+        if UserDefaults.standard.string(forKey: "dbThreshold") == nil{
+            UserDefaults.standard.set(-20, forKey: "dbThreshold")
+        }
+        if UserDefaults.standard.string(forKey: "minimumSilence") == nil{
+            UserDefaults.standard.set(0.7, forKey: "minimumSilence")
+        }
+        if UserDefaults.standard.string(forKey: "minimumSound") == nil{
+            UserDefaults.standard.set(0.3, forKey: "minimumSound")
+        }
+        if UserDefaults.standard.string(forKey: "headAdjust") == nil{
+            UserDefaults.standard.set(0.1, forKey: "headAdjust")
+        }
+        if UserDefaults.standard.string(forKey: "tailAdjust") == nil{
+            UserDefaults.standard.set(0.7, forKey: "tailAdjust")
+        }
+        if UserDefaults.standard.string(forKey: "sampleNumber") == nil{
+            UserDefaults.standard.set(100, forKey: "sampleNumber")
+        }
+
+    }
+    
     @IBAction func inputButtonPressed(sender: NSButton) {
         if let url = NSOpenPanel().selectUrl {
             self.inputField?.stringValue = url.path
             self.selectedPath = url
         }
+
         if selectedPath != nil && selectedDestination != nil{
             self.processButton?.isEnabled = true
         }
@@ -50,8 +74,33 @@ class ViewController: NSViewController {
     }
     
     @IBAction func processButtonPressed(sender: NSButton) {
-        if selectedPath != nil && selectedDestination != nil{
-            processFiles(inputURL: selectedPath!, outputDirectory: selectedDestination!, detectionType: (self.detectionSelector?.titleOfSelectedItem)!, trimType: (self.splitSelector?.titleOfSelectedItem)!)
+        setDefaultSettings()
+        guard let selectedPath = selectedPath,
+            let selectedDestination = selectedDestination,
+            let detectionType = self.detectionSelector?.titleOfSelectedItem,
+            let trimType = self.splitSelector?.titleOfSelectedItem else{
+                return
+                
+        }
+        processFiles(inputURL: selectedPath, outputDirectory: selectedDestination, detectionType: detectionType, trimType: trimType)
+    }
+    
+    @IBAction func advancedDropdownToggled(sender: NSButton) {
+        guard let window = view.window else{
+            return
+        }
+        if sender.state.rawValue == 1{
+            // Expand the window
+            self.view.frame = NSRect.init(x: 0, y: 0, width: 480, height: 290)
+            let contentSize = self.view.frame.size
+            let newWindowSize = self.view.window?.frameRect(forContentRect: NSRect(origin: window.frame.origin, size: contentSize))
+            window.animator().setFrame(newWindowSize!, display: false)
+        } else{
+            // Close the window
+            self.view.frame = NSRect.init(x: 0, y: 0, width: 480, height: 140)
+            let contentSize = self.view.frame.size
+            let newWindowSize = self.view.window?.frameRect(forContentRect: NSRect(origin: window.frame.origin, size: contentSize))
+            window.animator().setFrame(newWindowSize!, display: false)
         }
     }
 

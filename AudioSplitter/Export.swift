@@ -13,10 +13,10 @@ func runFFMPEG(input: URL, output: URL, inPoint:Double, outPoint:Double){
     process.executableURL = URL(fileURLWithPath:"/usr/local/bin/ffmpeg")
     process.arguments = ["-y", "-v", "quiet", "-i", input.path, "-ss", String(inPoint), "-to", String(outPoint), "-c", "copy", output.path]
     process.terminationHandler = { (process) in
-        print("\nFinished: \(output.path)")
+//        print("\nFinished: \(output.path)")
     }
     do {
-        print("Exporting \(output.path)")
+//        print("Exporting \(output.path)")
         try process.run()
     } catch {}
 }

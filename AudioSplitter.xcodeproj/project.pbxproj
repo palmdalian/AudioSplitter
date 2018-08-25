@@ -14,6 +14,7 @@
 		5AE2BDD02117A09000B3FA8E /* ProcessAudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AE2BDCF2117A09000B3FA8E /* ProcessAudio.swift */; };
 		5AE2BDD22117A48400B3FA8E /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AE2BDD12117A48400B3FA8E /* Extensions.swift */; };
 		5AE2BDD42118114E00B3FA8E /* Export.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AE2BDD32118114E00B3FA8E /* Export.swift */; };
+		5AEC13AD212A003900E3D6F7 /* SoundTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC13AC212A003900E3D6F7 /* SoundTiming.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 		5AE2BDCF2117A09000B3FA8E /* ProcessAudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessAudio.swift; sourceTree = "<group>"; };
 		5AE2BDD12117A48400B3FA8E /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		5AE2BDD32118114E00B3FA8E /* Export.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Export.swift; sourceTree = "<group>"; };
+		5AEC13AC212A003900E3D6F7 /* SoundTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundTiming.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +65,7 @@
 				5A4975F12116323800A0800F /* ViewController.swift */,
 				5AE2BDD12117A48400B3FA8E /* Extensions.swift */,
 				5AE2BDCF2117A09000B3FA8E /* ProcessAudio.swift */,
+				5AEC13AC212A003900E3D6F7 /* SoundTiming.swift */,
 				5AE2BDD32118114E00B3FA8E /* Export.swift */,
 				5A4975F32116323900A0800F /* Assets.xcassets */,
 				5A4975F52116323900A0800F /* Main.storyboard */,
@@ -148,6 +151,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5AE2BDD42118114E00B3FA8E /* Export.swift in Sources */,
+				5AEC13AD212A003900E3D6F7 /* SoundTiming.swift in Sources */,
 				5AE2BDD02117A09000B3FA8E /* ProcessAudio.swift in Sources */,
 				5A4975F22116323800A0800F /* ViewController.swift in Sources */,
 				5A4975F02116323800A0800F /* AppDelegate.swift in Sources */,
