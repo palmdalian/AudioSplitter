@@ -4,6 +4,7 @@ Split files based on silence in a given clip.
 
 ## Basic Usage
 Select a file using "Select File" and a destination folder using "Destination". Click "Process" and individual audio clips will be split out and saved to the destination folder. Note: FFMPEG must be installed when using Split or Trim.
+![Interface](docs/images/Interface.png)
 
 ## Extra Options
 Output options include Split, Trim, and XML
@@ -29,6 +30,7 @@ Use waveform peaks (averaged over the number of samples) when comparing to dB Th
 
 ## Advanced options
 Several options are available to tweak audio parameters based on the input characteristics.
+![Advanced](docs/images/AdvancedOptions.png)
 
 #### dB Threshold
 Any sample dB value under this number will be considered silence.
