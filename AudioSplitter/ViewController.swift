@@ -15,6 +15,7 @@ class ViewController: NSViewController {
     @IBOutlet weak var destinationField: NSTextField?
     @IBOutlet weak var detectionSelector: NSPopUpButton?
     @IBOutlet weak var splitSelector: NSPopUpButton?
+    @IBOutlet weak var progressBar: NSProgressIndicator?
     var selectedPath: URL?
     var selectedDestination: URL?
 
@@ -22,6 +23,7 @@ class ViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setDefaultSettings()
+        self.progressBar?.stopAnimation(nil)
     }
 
     override var representedObject: Any? {
@@ -82,7 +84,14 @@ class ViewController: NSViewController {
                 return
                 
         }
-        processFiles(inputURL: selectedPath, outputDirectory: selectedDestination, detectionType: detectionType, trimType: trimType)
+        self.processButton?.isEnabled = false
+        self.progressBar?.startAnimation(nil)
+        processFiles(inputURL: selectedPath, outputDirectory: selectedDestination, detectionType: detectionType, trimType: trimType, block: {
+            DispatchQueue.main.async {
+                self.processButton?.isEnabled = true
+                self.progressBar?.stopAnimation(nil)
+            }
+        })
     }
     
     @IBAction func advancedDropdownToggled(sender: NSButton) {

@@ -150,9 +150,6 @@ func findSound(channelData: UnsafeMutablePointer<Float>, sampleCount: Int, sampl
             soundList[i-1] = prevTiming
         }
     }
-    for timing in soundList{
-        print(timing.start, timing.end)
-    }
     
     return soundList
 }
@@ -195,13 +192,18 @@ func processFile(inputURL: URL, outputDirectory: URL, detectionType: String, tri
     
     let ext = inputURL.pathExtension
     let name = inputURL.deletingPathExtension().lastPathComponent
-    for (i, timing) in soundList.enumerated(){
-        let outputPath = outputDirectory.appendingPathComponent("\(name)_\(i).\(ext)")
-        runFFMPEG(input: inputURL, output: outputPath, inPoint: timing.start, outPoint: timing.end)
-    }    
+    if trimType == "XML"{
+        let outputPath = outputDirectory.appendingPathComponent("\(name).xml")
+        buildXML(input: inputURL, output: outputPath, timings: soundList, sampleRate: sr)
+    } else{
+        for (i, timing) in soundList.enumerated(){
+            let outputPath = outputDirectory.appendingPathComponent("\(name)_\(i).\(ext)")
+            runFFMPEG(input: inputURL, output: outputPath, inPoint: timing.start, outPoint: timing.end)
+        }
+    }
 }
 
-func processFiles(inputURL: URL, outputDirectory: URL, detectionType: String, trimType: String){
+func processFiles(inputURL: URL, outputDirectory: URL, detectionType: String, trimType: String, block:@escaping (() -> ())){
     var isDir : ObjCBool = false
     if FileManager.default.fileExists(atPath: inputURL.path, isDirectory: &isDir){
         if isDir.boolValue{
@@ -209,6 +211,7 @@ func processFiles(inputURL: URL, outputDirectory: URL, detectionType: String, tr
         } else{
             DispatchQueue.global(qos: .background).async {
                 processFile(inputURL: inputURL, outputDirectory: outputDirectory, detectionType: detectionType, trimType: trimType)
+                block()
             }
         }
     } else{

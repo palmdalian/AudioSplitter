@@ -12,3 +12,12 @@ struct SoundTiming {
     var start: Double
     var end: Double
 }
+
+struct XMLTiming : Codable {
+    var start: Double
+    var end: Double
+    var rate: Double
+    var path: String
+}
+
+
